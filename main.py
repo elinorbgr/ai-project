@@ -66,6 +66,11 @@ def pickUpWordFromEntitiesLists(entitiesList,form):
 def setWordInTheCorrectForm(word, form):
 	return (True,(word,form))
 
+def shuffle(x):
+	x = list(x)
+	random.shuffle(x)
+	return x
+
 def generateProverb(theme, rate=0.5):
 	# Load Background Corpus
 	backgroundGraph = nltk.text.ContextIndex([word.lower( ) for word in nltk.corpus.brown.words( )])
@@ -83,13 +88,16 @@ def generateProverb(theme, rate=0.5):
 	modif = [False]*len(lProverb)
 
 	# Main loop of the algorithm
-	while computeModificationRate(initialLProverb,lProverb) < rate:
+
+	permutation = shuffle(range(0,len(lProverb)))
+	for i in permutation:
+	
+		if computeModificationRate(initialLProverb,lProverb) > rate:
+			break
 
 		# Pick up a random word from the proverb
-		(index, word) = getRandomWordFromModifMask(modif, lProverb)
+		(index, word) = (i,lProverb[i])
 
-		if word == None:
-			break
 
 		# Pick up a word from the background graph
 		(finded, newWord) = pickUpWordFromEntitiesLists(entitiesList,word[1])
@@ -104,6 +112,11 @@ def generateProverb(theme, rate=0.5):
 		print(str(word) + " -> " + str(newWord))
 
 
-	return ' '.join([w for (w,t) in lProverb])
+	print(proverb)
+
+	newProverb = ' '.join([w for (w,t) in lProverb])
+	print(newProverb)
+
+	return newProverb
 
 
