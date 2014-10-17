@@ -2,119 +2,103 @@
 
 import nltk
 import random
+import sys
+import os
 from random import randint
+from collections import defaultdict
+
+import lt
 #TODO
 # tagsList = getTags(word)
 # (isWordInCorrectForm, newWord) = setWordInTheCorrectForm(newWord, form)
 
+def distance(proverb1, proverb2):
+    return float(sum(1 for (a,b) in zip(proverb1, proverb2) if a != b)) / len(proverb1)
 
-def file_len(f):
-    for i, l in enumerate(f):
-        pass
-        return i + 1
+def corresponding(lt_tag, nltk_tag):
+    return (
+        (nltk_tag.startswith("JJ") and lt_tag.startswith("adj"))
+        or (nltk_tag.startswith("VB") and lt_tag.startswith("v"))
+        or (nltk_tag.startswith("N") and lt_tag.startswith("n"))
+        or (nltk_tag.startswith("CC") and lt_tag.startswith("cnj"))
+        or (nltk_tag.startswith("CD") and lt_tag.startswith("num"))
+        or (nltk_tag.startswith("DT") and lt_tag.startswith("det"))
+        or (nltk_tag.startswith("MD") and lt_tag.startswith("vaux"))
+        or (nltk_tag.startswith("PDT") and lt_tag.startswith("predet"))
+        or (nltk_tag.startswith("PR") and lt_tag.startswith("prn"))
+        or (nltk_tag.startswith("RB") and lt_tag.startswith("adv"))
+        or (nltk_tag.startswith("RP") and lt_tag.startswith("pr"))
+        )
 
+class ProverbGenerator:
 
-def getRandomProverb():
-    proverbsFile = open('proverbsList','r')
-    proverbsList = proverbsFile.readlines()
-    line = randint(0,len(proverbsList)-1)
-    proverb = proverbsList[line];
-    proverbsFile.close()
-    return proverb[0:-1]
+    def __init__(self):
+        # FST analyser
+        self.analyser = lt.Analyser()
 
-def computeModificationRate(initialLProverb,lProverb):
-    diffWords=0
-    for a,b in zip(initialLProverb,lProverb):
-        if a!=b:
-            diffWords = diffWords + 1
-    return float(diffWords)/len(initialLProverb)
+        # Proverb list
+        with open('proverbsList','r') as pfile:
+            self.proverbsList = [line.rstrip() for line in pfile]
 
-def getTags(word):
-    l = nltk.pos_tag([word])
-    tags = [ t for (w,t) in l]
-    return tags
+        # background graph
+        self.backgroundGraph = nltk.text.ContextIndex(
+            [word.lower() for word in nltk.corpus.brown.words()]
+        )
 
-def fillLists(words):
-    l=dict()
-    for w in words:
-        tags = getTags(w)
-        for t in tags:
-            if l.keys().count(t)==0:
-                l[t] = []
-            l[t].append(w)
-    return l
+    def randomProverb(self):
+        return self.proverbsList[randint(0,len(self.proverbsList)-1)]
 
-def getRandomWordFromModifMask(modifMask,proverb):
-    nWordUnmodified = modifMask.count(False)
-    if nWordUnmodified==0:
-        return False
-    nWord = randint(0,nWordUnmodified)
-    index = 0
-    for i,m,w in zip(range(0,len(modifMask)),modifMask, proverb):
-        if m==False:
-            index = index + 1
-        if index==nWord:
-            return (i, w)
-    return (False, None)
+    def categorize_words(self, words):
+        d = defaultdict(list)
+        for w in words:
+            for (base, tags) in self.analyser.analyse(w):
+                d[tags[0]].append(base)
+        return d
 
-def pickUpWordFromEntitiesLists(entitiesList,form):
-    if entitiesList.keys().count(form)==0:
-        return (False, None)
-    else:
-        return (True, random.choice(entitiesList[form]))
+    def analyse_proverb(self, proverb):
+        pos_tagged = nltk.pos_tag(proverb)
+        print(pos_tagged)
+        analysis = []
 
-def setWordInTheCorrectForm(word, form):
-    return (True,(word,form))
-
-def shuffle(x):
-    x = list(x)
-    random.shuffle(x)
-    return x
-
-def generateProverb(theme, rate=0.5):
-    # Load Background Corpus
-    backgroundGraph = nltk.text.ContextIndex([word.lower( ) for word in nltk.corpus.brown.words( )])
-
-    # Build background graph from the theme
-    words = backgroundGraph.similar_words(theme,100)
-    entitiesList = fillLists(words)
-
-    # Get a proverb
-    proverb = getRandomProverb()
-    print(proverb)
-    lProverb = nltk.pos_tag(nltk.word_tokenize(proverb))
-    initialLProverb = lProverb
-
-    modif = [False]*len(lProverb)
-
-    # Main loop of the algorithm
-
-    permutation = shuffle(range(0,len(lProverb)))
-    for i in permutation:
-
-        if computeModificationRate(initialLProverb,lProverb) > rate:
-            break
-
-        # Pick up a random word from the proverb
-        (index, word) = (i,lProverb[i])
-
-        # Pick up a word from the background graph
-        (finded, newWord) = pickUpWordFromEntitiesLists(entitiesList,word[1])
-
-        # Replace if the word can be put in the right form
-        if finded:
-            (isWordInCorrectForm, newWord) = setWordInTheCorrectForm(newWord, word[1])
-            if isWordInCorrectForm:
-                modif[index] = True
-                lProverb[index] = newWord
-
-        print(str(word) + " -> " + str(newWord))
-
-    print(proverb)
-
-    newProverb = ' '.join([w for (w,t) in lProverb])
-    print(newProverb)
-
-    return newProverb
+        for (w,pos) in zip(proverb, pos_tagged):
+            a = self.analyser.analyse(w)
+            if len(a) == 1:
+                analysis.append(a[0][1])
+            else:
+                keep = None
+                for b in a:
+                    if corresponding(b[1][0], pos[1]):
+                        keep = b
+                if keep is None:
+                    keep = a[0]
+                analysis.append(keep[1])
 
 
+        return [self.analyser.analyse(w)[0][1] for w in proverb]
+
+    def generate(self, theme, rate=0.5):
+        # disabel over verbosity
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        similar_words = self.backgroundGraph.similar_words(theme, 100)
+        sys.stdout = old_stdout
+
+        categories = self.categorize_words(similar_words)
+        
+        base_proverb = nltk.word_tokenize(self.randomProverb())
+        base_analysis = self.analyse_proverb(base_proverb)
+
+        new_proverb = [ base_proverb[i] for i in range(len(base_proverb))]
+
+        permutation = list(range(0,len(base_proverb)))
+        random.shuffle(permutation)
+        for i in permutation:
+            if len(categories[base_analysis[i][0]]) == 0 or distance(base_proverb, new_proverb) > rate:
+                continue
+
+            new_word = random.choice(categories[base_analysis[i][0]])
+
+            new_proverb[i] = self.analyser.generate(new_word, base_analysis[i])
+
+        for ((a,b),c) in zip(zip(base_proverb,new_proverb),base_analysis):
+            print(a,b,c)

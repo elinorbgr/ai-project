@@ -59,6 +59,8 @@ class Analyser:
     def analyse(self, word):
         analysed = self.fst.analyse(word)
         results = []
+        if analysed[0] == '@':
+            return [(analysed, ["?"])]
         for token in analysed.split("/"):
             toks = [t.rstrip(">") for t in token.split("<")]
             results.append((toks.pop(0), toks))
