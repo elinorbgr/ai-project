@@ -44,6 +44,8 @@ class FST(object):
         ana_p = self.__lib.generate(self.__handle, word)
         if ana_p:
             analysis = ana_p.contents.value
+            if analysis[0] == '@':
+                analysis = word
         else:
             analysis = ""
         self.__lib.free_analyses(ana_p)

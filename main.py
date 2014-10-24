@@ -19,8 +19,11 @@ def corresponding(lt_tag, nltk_tag):
     return (
         (nltk_tag.startswith("JJ") and lt_tag.startswith("adj"))
         or (nltk_tag.startswith("VB") and lt_tag.startswith("v"))
+        or (nltk_tag.startswith("MD") and lt_tag.startswith("v"))
+        or (nltk_tag.startswith("NNP") and lt_tag.startswith("v"))
         or (nltk_tag.startswith("N") and lt_tag.startswith("n"))
         or (nltk_tag.startswith("CC") and lt_tag.startswith("cnj"))
+        or (nltk_tag.startswith("IN") and lt_tag.startswith("cnj"))
         or (nltk_tag.startswith("CD") and lt_tag.startswith("num"))
         or (nltk_tag.startswith("DT") and lt_tag.startswith("det"))
         or (nltk_tag.startswith("MD") and lt_tag.startswith("vaux"))
@@ -42,7 +45,7 @@ class ProverbGenerator:
 
         # background graph
         self.backgroundGraph = nltk.text.ContextIndex(
-            [word.lower() for word in nltk.corpus.brown.words()]
+            [word.lower() for word in nltk.corpus.gutenberg.words()]
         )
 
     def randomProverb(self):
@@ -73,8 +76,7 @@ class ProverbGenerator:
                     keep = a[0]
                 analysis.append(keep[1])
 
-
-        return [self.analyser.analyse(w)[0][1] for w in proverb]
+        return analysis
 
     def generate(self, theme, rate=0.5):
         # disabel over verbosity
@@ -96,9 +98,17 @@ class ProverbGenerator:
             if len(categories[base_analysis[i][0]]) == 0 or distance(base_proverb, new_proverb) > rate:
                 continue
 
+            if (base_analysis[i][0].startswith("prn")
+             or base_analysis[i][0].startswith("det")
+             or base_analysis[i][0].startswith("num")):
+                continue
+
             new_word = random.choice(categories[base_analysis[i][0]])
 
             new_proverb[i] = self.analyser.generate(new_word, base_analysis[i])
 
         for ((a,b),c) in zip(zip(base_proverb,new_proverb),base_analysis):
             print(a,b,c)
+
+        print(" ".join(base_proverb))
+        print(" ".join(new_proverb))
