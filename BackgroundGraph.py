@@ -5,7 +5,6 @@ import math
 import copy
 
 class BackgroundGraph:
-
     #constructor
     def __init__(self, nameCurrentGraph):
         #variables initialization
@@ -32,7 +31,7 @@ class BackgroundGraph:
     #load a graph from an existing file
     def loadFileGraph(self):
         try:
-            file= open(self.nameCurrentGraph, 'rb')
+            file = open(self.nameCurrentGraph, 'rb')
             try:
                 self.graph = pickle.load(file)
             except:
@@ -120,45 +119,42 @@ class BackgroundGraph:
                 LLR[mot1][mot2]= -2* ( k11*math.log(p11n/p11)+k12*math.log(p12n/p12)+ k21*math.log(p21n/p21)+ k22*math.log(p22n/p22))
         self.graph=LLR
 
-            
-            
+def tests():
+    ##########################
+    #CODE TESTING            #
+    ##########################
 
-##########################
-#CODE TESTING            #
-##########################
-    
-#Graph creation
-graph = BackgroundGraph("Test")
+    #Graph creation
+    graph = BackgroundGraph("Test")
 
-#Graph filling
-graph.addWords("chien", "chat")
-graph.addWords("souris", "chat")
-graph.addWords("laisse", "chien")
-graph.addWords("souris", "chat")
-graph.addWords("chat", "chien")
-graph.addWords("poisson", "chat")
+    #Graph filling
+    graph.addWords("chien", "chat")
+    graph.addWords("souris", "chat")
+    graph.addWords("laisse", "chien")
+    graph.addWords("souris", "chat")
+    graph.addWords("chat", "chien")
+    graph.addWords("poisson", "chat")
 
-#graph printing
-print(graph.graph)
+    #graph printing
+    print(graph.graph)
 
-#closest neighbors
-print(graph.getNeighbors("chat", 2))
+    #closest neighbors
+    print(graph.getNeighbors("chat", 2))
 
-#proximity between 2 words
-print(graph.prox("chat", "poisson"))
+    #proximity between 2 words
+    print(graph.prox("chat", "poisson"))
 
-graph.normalize()
-print(graph.graph)
+    graph.normalize()
+    print(graph.graph)
 
-print(graph.prox("chat", "poisson"))
-print(graph.getNeighbors("chat", 2))
+    print(graph.prox("chat", "poisson"))
+    print(graph.getNeighbors("chat", 2))
 
-"""
-#serialization
-graph.saveFileGraph()
+    # serialization
+    #graph.saveFileGraph()
 
-#load preexisting graph from a file
-graph2 = BackgroundGraph("Test")
-print(graph2.graph)
-"""
+    # load preexisting graph from a file
+    #graph2 = BackgroundGraph("Test")
+    #print(graph2.graph)
+ 
             

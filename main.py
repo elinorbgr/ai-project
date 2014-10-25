@@ -7,10 +7,48 @@ import os
 from random import randint
 from collections import defaultdict
 
+from BackgroundGraph import BackgroundGraph
+
 import lt
 #TODO
 # tagsList = getTags(word)
 # (isWordInCorrectForm, newWord) = setWordInTheCorrectForm(newWord, form)
+
+def add_to_background_graph(graph_file, input_file):
+    analyser = lt.Analyser()
+
+    words = []
+    with open(input_file,'r') as ifile:
+        words += nltk.word_tokenize(ifile.read())
+
+    graph = BackgroundGraph(graph_file)
+
+    sentence_count = 0
+
+    sentence = []
+    for w in words:
+        if w == ".":
+            # end of a sentence
+            for i in range(len(sentence)):
+                for j in range(i+1, len(sentence)):
+                    graph.addWords(sentence[i], sentence[j])
+            sentence_count += 1
+            print("Finished sentence {}.".format(sentence_count))
+
+        else:
+            analysis = analyser.analyse(w)
+            keep = None
+            for (b, t) in analysis:
+                if t[0] != ["?"] and not (        # skip unrecognized
+                        t[0].startswith("prn")    # and pronoums
+                        or t[0].startswith("det") # and determinants
+                        or t[0].startswith("num") # and numerals
+                        ):
+                    keep = b
+            if keep is not None:
+                sentence.append(keep)
+
+    graphe.saveFileGraph()
 
 def distance(proverb1, proverb2):
     return float(sum(1 for (a,b) in zip(proverb1, proverb2) if a != b)) / len(proverb1)
@@ -35,7 +73,7 @@ def corresponding(lt_tag, nltk_tag):
 
 class ProverbGenerator:
 
-    def __init__(self):
+    def __init__(self, graph_file):
         # FST analyser
         self.analyser = lt.Analyser()
 
@@ -44,9 +82,8 @@ class ProverbGenerator:
             self.proverbsList = [line.rstrip() for line in pfile]
 
         # background graph
-        self.backgroundGraph = nltk.text.ContextIndex(
-            [word.lower() for word in nltk.corpus.gutenberg.words()]
-        )
+        self.backgroundGraph = BackgroundGraph(graph_file)
+        self.backgroundGraph.normalize()
 
     def randomProverb(self):
         return self.proverbsList[randint(0,len(self.proverbsList)-1)]
@@ -82,7 +119,7 @@ class ProverbGenerator:
         # disabel over verbosity
         old_stdout = sys.stdout
         sys.stdout = open(os.devnull, 'w')
-        similar_words = self.backgroundGraph.similar_words(theme, 100)
+        similar_words = self.backgroundGraph.getNeighbors(theme, 100)
         sys.stdout = old_stdout
 
         categories = self.categorize_words(similar_words)
