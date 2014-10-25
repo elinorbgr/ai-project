@@ -1,6 +1,8 @@
 import pickle
 from operator import itemgetter
 import itertools
+import math
+import copy
 
 class BackgroundGraph:
 
@@ -75,8 +77,52 @@ class BackgroundGraph:
     def prox(self, word1, word2):
         return self.graph[word1][word2]
 
-    
-"""
+
+    def normalize(self):
+        compt_back={}
+        compt_rel={}
+        LLR={}
+        #background and relative frequencies calculus
+        tot_mot = 0
+        for mot1, dic in self.graph.items():
+            compt_rel[mot1] = {}
+            tot_curr_mot = sum(dic.values())
+            compt_back[mot1]=tot_curr_mot 
+            tot_mot+= tot_curr_mot
+            for mot2, nb_assoc in dic.items():
+                compt_rel[mot1][mot2] = nb_assoc/(tot_curr_mot+0.0)
+        for mot, val_abs in compt_back.items():
+            compt_back[mot] = val_abs / (tot_mot + 0.0)
+        #final likelihood calculus
+        LLR = copy.deepcopy(compt_rel)
+        for mot1, dic in compt_rel.items():
+            for mot2, freq in dic.items():
+                p11=compt_rel[mot1][mot2]*compt_back[mot1]
+                if p11<=0:   p11=10**-15
+                k11=self.graph[mot1][mot2]
+                p11n=compt_back[mot1]*compt_back[mot2]
+                p12=compt_back[mot2]-p11
+                if p12<=0:   p12=10**-15
+                k12=sum(self.graph[mot2].values())-k11
+                p12n=compt_back[mot2]-p11n
+                if p12n<=0:   p12n=10**-15
+                p21=compt_back[mot1]-p11
+                if p21<=0:   p21=10**-15
+                k21=sum(self.graph[mot1].values())-k11
+                p21n=compt_back[mot1]-p11n
+                if p21n<=0:   p21n=10**-15
+                p22=1-(p11+p12+p21)
+                if p22<=0:   p22=10**-15
+                p22n=1-(p11n+p12n+p21n)
+                if p22n<=0:   p22n=10**-15
+                k22=tot_mot
+                #print(p11,k11,p11n,p12,k12,p12n,p21,k21,p21n,p22,p22n,k22)
+                LLR[mot1][mot2]= -2* ( k11*math.log(p11n/p11)+k12*math.log(p12n/p12)+ k21*math.log(p21n/p21)+ k22*math.log(p22n/p22))
+        self.graph=LLR
+
+            
+            
+
 ##########################
 #CODE TESTING            #
 ##########################
@@ -101,6 +147,13 @@ print(graph.getNeighbors("chat", 2))
 #proximity between 2 words
 print(graph.prox("chat", "poisson"))
 
+graph.normalize()
+print(graph.graph)
+
+print(graph.prox("chat", "poisson"))
+print(graph.getNeighbors("chat", 2))
+
+"""
 #serialization
 graph.saveFileGraph()
 
