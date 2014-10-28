@@ -33,8 +33,8 @@ def add_to_background_graph(graph_file, input_file):
                 for j in range(i+1, len(sentence)):
                     graph.addWords(sentence[i], sentence[j])
             sentence_count += 1
-            print("Finished sentence {}.".format(sentence_count))
-
+            print("{} S {}: {}".format(input_file, sentence_count, sentence))
+            sentence = []
         else:
             analysis = analyser.analyse(w)
             keep = None
@@ -43,12 +43,13 @@ def add_to_background_graph(graph_file, input_file):
                         t[0].startswith("prn")    # and pronoums
                         or t[0].startswith("det") # and determinants
                         or t[0].startswith("num") # and numerals
+                        or t[0].startswith("adv") # and adverbs
                         ):
                     keep = b
             if keep is not None:
                 sentence.append(keep)
 
-    graphe.saveFileGraph()
+    graph.saveFileGraph()
 
 def distance(proverb1, proverb2):
     return float(sum(1 for (a,b) in zip(proverb1, proverb2) if a != b)) / len(proverb1)
