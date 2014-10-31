@@ -10,17 +10,15 @@ from collections import defaultdict
 from BackgroundGraph import BackgroundGraph
 
 import lt
-#TODO
-# tagsList = getTags(word)
-# (isWordInCorrectForm, newWord) = setWordInTheCorrectForm(newWord, form)
 
 def add_to_background_graph(graph_file, input_file):
-    analyser = lt.Analyser()
-
     words = []
     with open(input_file,'r') as ifile:
         words += nltk.word_tokenize(ifile.read())
+    add_words_to_background_graph(graph_file, words)
 
+def add_words_to_background_graph(graph_file, words):
+    analyser = lt.Analyser()
     graph = BackgroundGraph(graph_file)
 
     sentence_count = 0
@@ -33,17 +31,22 @@ def add_to_background_graph(graph_file, input_file):
                 for j in range(i+1, len(sentence)):
                     graph.addWords(sentence[i], sentence[j])
             sentence_count += 1
-            print("{} S {}: {}".format(input_file, sentence_count, sentence))
+            print("{}: {}".format(sentence_count, sentence))
             sentence = []
         else:
-            analysis = analyser.analyse(w)
+            try:
+                analysis = analyser.analyse(w)
+            except:
+                continue
+
             keep = None
             for (b, t) in analysis:
-                if t[0] != ["?"] and not (        # skip unrecognized
+                if len(t) > 0 and t[0] != ["?"] and not(# skip unrecognized
                         t[0].startswith("prn")    # and pronoums
                         or t[0].startswith("det") # and determinants
                         or t[0].startswith("num") # and numerals
                         or t[0].startswith("adv") # and adverbs
+                        or t[0].startswith("sent") # and punctuation
                         ):
                     keep = b
             if keep is not None:
@@ -84,7 +87,7 @@ class ProverbGenerator:
 
         # background graph
         self.backgroundGraph = BackgroundGraph(graph_file)
-        self.backgroundGraph.normalize()
+        #self.backgroundGraph.normalize()
 
     def randomProverb(self):
         return self.proverbsList[randint(0,len(self.proverbsList)-1)]
@@ -138,7 +141,10 @@ class ProverbGenerator:
 
             if (base_analysis[i][0].startswith("prn")
              or base_analysis[i][0].startswith("det")
-             or base_analysis[i][0].startswith("num")):
+             or base_analysis[i][0].startswith("num")
+             or base_analysis[i][0].startswith("adv")
+             or base_analysis[i][0].startswith("cnj")
+             or base_analysis[i][0].startswith("sent")):
                 continue
 
             new_word = random.choice(categories[base_analysis[i][0]])
