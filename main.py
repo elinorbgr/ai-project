@@ -11,7 +11,7 @@ from BackgroundGraph import BackgroundGraph
 
 import lt
 
-def add_to_background_graph(graph_file, input_file):
+def add_file_to_background_graph(graph_file, input_file):
     words = []
     with open(input_file,'r') as ifile:
         words += nltk.word_tokenize(ifile.read())
