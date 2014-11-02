@@ -101,7 +101,7 @@ class ProverbGenerator:
 
     def analyse_proverb(self, proverb):
         pos_tagged = nltk.pos_tag(proverb)
-        print(pos_tagged)
+        #print(pos_tagged)
         analysis = []
 
         for (w,pos) in zip(proverb, pos_tagged):
@@ -136,7 +136,7 @@ class ProverbGenerator:
         permutation = list(range(0,len(base_proverb)))
         random.shuffle(permutation)
         for i in permutation:
-            if len(categories[base_analysis[i][0]]) == 0 or distance(base_proverb, new_proverb) > rate:
+            if len(categories[base_analysis[i][0]]) == 0:
                 continue
 
             if (base_analysis[i][0].startswith("prn")
@@ -151,8 +151,8 @@ class ProverbGenerator:
 
             new_proverb[i] = self.analyser.generate(new_word, base_analysis[i])
 
-        for ((a,b),c) in zip(zip(base_proverb,new_proverb),base_analysis):
-            print(a,b,c)
+        #for ((a,b),c) in zip(zip(base_proverb,new_proverb),base_analysis):
+        #    print(a,b,c)
 
-        print(" ".join(base_proverb))
-        print(" ".join(new_proverb))
+        print("Original proverb:  " + " ".join(base_proverb))
+        print("Generated proverb: " + " ".join(new_proverb))

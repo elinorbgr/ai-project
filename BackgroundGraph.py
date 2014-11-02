@@ -67,6 +67,8 @@ class BackgroundGraph:
 
     #get the N closest neighbors        
     def getNeighbors(self, word, N):
+        if word not in self.graph:
+            return []
         l=list(self.graph[word].items())
         l.sort(key=itemgetter(1),reverse=True)
         if N<len(l): return [l[i][0] for i in range(N)] 

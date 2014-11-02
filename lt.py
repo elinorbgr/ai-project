@@ -75,4 +75,9 @@ class Analyser:
         arg = base
         for t in tokens:
             arg += "<" + t + ">"
-        return self.fst.generate(arg)
+        out =  self.fst.generate(arg)
+        if "<" in out:
+            return base
+        else:
+            return out
+
